@@ -1,4 +1,30 @@
 {
+  "name": "@omer-x/next-redis-cache-handler",
+  "version": "1.5.0",
+  "description": "Redis cache handler for Next.js",
+  "keywords": [
+    "next.js",
+    "redis",
+    "cache"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/omermecitoglu/next-redis-cache-handler.git"
+  },
+  "bugs": {
+    "url": "https://github.com/omermecitoglu/next-redis-cache-handler/issues"
+  },
+  "homepage": "https://github.com/omermecitoglu/next-redis-cache-handler#readme",
+  "private": false,
+  "publishConfig": {
+    "access": "public"
+  },
+  "author": {
+    "name": "Omer Mecitoglu",
+    "email": "omer.mecitoglu@gmail.com",
+    "url": "https://omermecitoglu.github.io"
+  },
+  "license": "MIT",
   "type": "module",
   "files": [
     "dist/"
@@ -16,12 +42,12 @@
     "build": "tsup"
   },
   "dependencies": {
-    "react": "^18.3.1"
+    "ioredis": "^5.4.2"
   },
   "devDependencies": {
     "@omer-x/eslint-config": "^2.1.2",
     "@omer-x/openapi-types": "^1.2.0",
-    "eslint": "^9.16.0",
+    "eslint": "^9.17.0",
     "ts-jest": "^29.2.5",
     "ts-node": "^10.9.2",
     "tsup": "^8.3.5",
