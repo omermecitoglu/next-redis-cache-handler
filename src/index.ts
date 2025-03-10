@@ -30,9 +30,9 @@ export default class CacheHandler {
     this.memory = new Map();
   }
 
-  private disconnectRedis() {
+  private async disconnectRedis() {
     if (!this.redis) return;
-    this.redis.quit();
+    await this.redis.quit();
     this.redis = undefined;
   }
 
@@ -52,7 +52,7 @@ export default class CacheHandler {
       return this.memory.get(key);
     }
     const cache = await redis.get(`key:${key}`);
-    this.disconnectRedis();
+    await this.disconnectRedis();
     return cache && JSON.parse(cache);
   }
 
@@ -72,7 +72,7 @@ export default class CacheHandler {
           await redis.sadd(`tag:${tag}`, key);
         }
       }
-      this.disconnectRedis();
+      await this.disconnectRedis();
     } else {
       this.memory.set(key, {
         value: cache,
@@ -91,7 +91,7 @@ export default class CacheHandler {
       }
       await redis.del(`tag:${tag}`);
     }
-    this.disconnectRedis();
+    await this.disconnectRedis();
   }
 
   // If you want to have temporary in memory cache for a single request that is reset
