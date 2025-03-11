@@ -50,15 +50,15 @@ export default class CacheHandler {
   }
 
   async set(key: string, cache: CacheStructure["value"], ctx: CacheContext) {
+    const cacheBody: CacheStructure = {
+      value: cache,
+      lastModified: Date.now(),
+    };
+    if ("tags" in ctx) {
+      cacheBody.tags = ctx.tags;
+    }
     if (cache.kind === "FETCH") {
       try {
-        const cacheBody: CacheStructure = {
-          value: cache,
-          lastModified: Date.now(),
-        };
-        if ("tags" in ctx) {
-          cacheBody.tags = ctx.tags;
-        }
         await redis.set(`key:${key}`, JSON.stringify(cacheBody));
         if ("tags" in ctx) {
           for (const tag of ctx.tags) {
@@ -69,10 +69,7 @@ export default class CacheHandler {
         // do nothing
       }
     } else {
-      cacheMap.set(key, {
-        value: cache,
-        lastModified: Date.now(),
-      });
+      cacheMap.set(key, cacheBody);
     }
   }
 
