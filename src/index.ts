@@ -1,24 +1,6 @@
 import Redis from "ioredis";
-
-type CacheStructure = {
-  value: {
-    kind: "FETCH" | "APP_PAGE" | "APP_ROUTE",
-  },
-  lastModified: number,
-  tags?: string[],
-};
-
-type CacheContext = {
-  revalidate: boolean,
-} & ({
-  fetchCache: boolean,
-  fetchUrl: string,
-  fetchIdx: number,
-  tags: string[],
-} | {
-  isRoutePPREnabled: boolean,
-  isFallback: boolean,
-});
+import type { CacheContext } from "./types/context";
+import type { CacheStructure } from "./types/structure";
 
 const cacheMap = new Map<string, CacheStructure>();
 const redis = new Redis({
