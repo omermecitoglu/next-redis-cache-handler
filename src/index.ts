@@ -20,61 +20,56 @@ type CacheContext = {
   isFallback: boolean,
 });
 
+const cacheMap = new Map<string, CacheStructure>();
+const redis = new Redis({
+  host: process.env.REDIS_HOST,
+  port: parseInt(process.env.REDIS_PORT || "6379"),
+  connectionName: process.title,
+});
+
 export default class CacheHandler {
   options: unknown;
-  redis?: Redis;
-  memory: Map<string, unknown>;
 
   constructor(options: unknown) {
     this.options = options;
-    this.memory = new Map();
-  }
-
-  private async disconnectRedis() {
-    if (!this.redis) return;
-    await this.redis.quit();
-    this.redis = undefined;
-  }
-
-  private getRedisConnection() {
-    if (!this.redis) {
-      return new Redis({
-        host: process.env.REDIS_HOST,
-        port: parseInt(process.env.REDIS_PORT || "6379"),
-      });
-    }
-    return this.redis;
   }
 
   async get(key: string) {
-    const redis = this.getRedisConnection();
-    if (this.memory.get(key)) {
-      return this.memory.get(key);
+    try {
+      if (cacheMap.get(key)) {
+        return cacheMap.get(key);
+      }
+      const cache = await redis.get(`key:${key}`);
+      if (cache) {
+        return JSON.parse(cache) as CacheStructure;
+      }
+      return undefined;
+    } catch {
+      return undefined;
     }
-    const cache = await redis.get(`key:${key}`);
-    await this.disconnectRedis();
-    return cache && JSON.parse(cache);
   }
 
   async set(key: string, cache: CacheStructure["value"], ctx: CacheContext) {
     if (cache.kind === "FETCH") {
-      const cacheBody: CacheStructure = {
-        value: cache,
-        lastModified: Date.now(),
-      };
-      if ("tags" in ctx) {
-        cacheBody.tags = ctx.tags;
-      }
-      const redis = this.getRedisConnection();
-      await redis.set(`key:${key}`, JSON.stringify(cacheBody));
-      if ("tags" in ctx) {
-        for (const tag of ctx.tags) {
-          await redis.sadd(`tag:${tag}`, key);
+      try {
+        const cacheBody: CacheStructure = {
+          value: cache,
+          lastModified: Date.now(),
+        };
+        if ("tags" in ctx) {
+          cacheBody.tags = ctx.tags;
         }
+        await redis.set(`key:${key}`, JSON.stringify(cacheBody));
+        if ("tags" in ctx) {
+          for (const tag of ctx.tags) {
+            await redis.sadd(`tag:${tag}`, key);
+          }
+        }
+      } catch {
+        // do nothing
       }
-      await this.disconnectRedis();
     } else {
-      this.memory.set(key, {
+      cacheMap.set(key, {
         value: cache,
         lastModified: Date.now(),
       });
@@ -82,16 +77,18 @@ export default class CacheHandler {
   }
 
   async revalidateTag(tags: string[] | string) {
-    tags = [tags].flat();
-    const redis = this.getRedisConnection();
-    for (const tag of tags) {
-      const keys = await redis.smembers(`tag:${tag}`);
-      for (const key of keys) {
-        await redis.del(`key:${key}`);
+    try {
+      tags = [tags].flat();
+      for (const tag of tags) {
+        const keys = await redis.smembers(`tag:${tag}`);
+        for (const key of keys) {
+          await redis.del(`key:${key}`);
+        }
+        await redis.del(`tag:${tag}`);
       }
-      await redis.del(`tag:${tag}`);
+    } catch {
+      // do nothing
     }
-    await this.disconnectRedis();
   }
 
   // If you want to have temporary in memory cache for a single request that is reset
