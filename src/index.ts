@@ -8,8 +8,12 @@ const redis = new Redis({
   port: parseInt(process.env.REDIS_PORT || "6379"),
   connectionName: process.title,
 });
-redis.on("connect", () => console.log("Connected to Redis"));
-redis.on("ready", () => console.log("Redis is ready"));
+redis.on("connect", () => {
+  // console.log("Connected to Redis");
+});
+redis.on("ready", () => {
+  // console.log("Redis is ready");
+});
 redis.on("error", error => {
   if (error.message.includes("ECONNREFUSED")) {
     const [_, _errorName, address] = error.message.split(" ");
