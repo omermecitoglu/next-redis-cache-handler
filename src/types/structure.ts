@@ -4,7 +4,7 @@ export type CacheStructure = {
     data: {
       body: string,
       status: number,
-      headers: Record<string, number>,
+      headers: Record<string, string>,
     },
   },
   lastModified: number,
